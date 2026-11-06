@@ -1,5 +1,7 @@
-# Module 06 — OOP for Agents
+# Module 6 — Talking to a Local Model — Ollama
 
-## Mini-Project: Appointment Assistant
+This project integrates a local LLM (`granite4.1:3b` via Ollama) with deterministic tool guardrails to build a reliable conversational assistant.
 
-This is a mock appointment helper for a fictional tax office. It can tell a customer which times are open on Monday, Wednesday, or Friday by using a separate AppointmentLookup tool. The replies are produced by simple keyword rules — there is no real AI model or database. Requests that try to book, schedule, or cancel an appointment are handed off to a human (the front desk) because the assistant is not allowed to change the schedule. If this system used real customer data, a bug in the history or tool could accidentally expose private appointment information or return incorrect availability.
+## Mini-Project Reflection
+
+The model performed well when answering factual questions directly grounded in the system instructions, such as providing the office address and required documentation. However, it struggled when asked about services outside of the prompt context, occasionally making assumptions rather than strictly offering a human handoff. To maintain reliability, deterministic logic—such as schedule changes, booking requests, and tool lookup triggers—was kept strictly in code rules. Using code-first guardrails prevents user prompt injections and ensures critical operational tasks execute accurately while reserving the model exclusively for natural language responses.

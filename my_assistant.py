@@ -1,44 +1,44 @@
 # my_assistant.py
 # Author: Madison Guss
 
-HANDOFF_WORDS = ["book", "schedule", "reserve", "cancel"]
 
+class MyAssistant:
+    """A custom assistant that uses deterministic rules first and an AI model for everything else."""
 
-class AppointmentAssistant:
-    """A mock appointment assistant for a tax office."""
-
-    def __init__(self, name, instructions, appointment_tool):
+    def __init__(self, name, instructions, tool_one, tool_two, model):
+        """Set up the assistant with its own name, instructions, tools, model, and history."""
         self.name = name
         self.instructions = instructions
-        self.appointment_tool = appointment_tool
+        self.tool_one = tool_one
+        self.tool_two = tool_two
+        self.model = model
         self.history = []
 
     def respond(self, user_message):
+        """Add user message to history, choose a reply, add reply to history, and return it."""
         self.history.append({"role": "user", "content": user_message})
         reply = self.choose_reply(user_message)
         self.history.append({"role": "assistant", "content": reply})
         return reply
 
+    def needs_human(self, text):
+        """Check if the user is asking to change schedule details or hand off to human."""
+        return "change" in text or "book" in text or "schedule" in text
+
     def choose_reply(self, user_message):
+        """Run custom rules or tools first. Otherwise, ask the model."""
         text = user_message.lower()
+
         if self.needs_human(text):
             return "I can't change the schedule. I'm passing you to the front desk."
-        if "time" in text or "open" in text or "available" in text:
-            return self.times_reply(user_message)
-        if "hello" in text:
-            return f"Hello! I'm {self.name}. Ask me which times are open on a day."
-        return "I'm not sure how to help with that. I can list open times."
 
-    def needs_human(self, text):
-        for word in HANDOFF_WORDS:
-            if word in text:
-                return True
-        return False
+        # Add any specific tool checks from your Week 10 project here if needed,
+        # otherwise unhandled questions fall through to the model:
+        return self.model_reply()
 
-    def times_reply(self, user_message):
-        day = self.appointment_tool.find_day(user_message)
-        if day is None:
-            return "Which day? I can check Monday, Wednesday, or Friday."
-        times = self.appointment_tool.open_times(day)
-        times_str = " and ".join(times)
-        return f"Open times on {day}: {times_str}."
+    def model_reply(self):
+        """Ask the model for a reply. Give a safe fallback answer if the model has none."""
+        reply = self.model.reply(self.instructions, self.history)
+        if reply is None:
+            return "Sorry, I can't answer that right now. Please try again in a moment."
+        return reply
