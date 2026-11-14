@@ -2,10 +2,10 @@
 # Author: Madison Guss
 
 
-class MyAssistant:
+class AppointmentAssistant:
     """A custom assistant that uses deterministic rules first and an AI model for everything else."""
 
-    def __init__(self, name, instructions, tool_one, tool_two, model):
+    def __init__(self, name, instructions, tool_one, tool_two=None, model=None):
         """Set up the assistant with its own name, instructions, tools, model, and history."""
         self.name = name
         self.instructions = instructions
@@ -32,9 +32,36 @@ class MyAssistant:
         if self.needs_human(text):
             return "I can't change the schedule. I'm passing you to the front desk."
 
-        # Add any specific tool checks from your Week 10 project here if needed,
-        # otherwise unhandled questions fall through to the model:
-        return self.model_reply()
+        # Check if tool_one can find a day in the user's message
+        if self.tool_one is not None and hasattr(self.tool_one, "find_day"):
+            day = self.tool_one.find_day(text)
+            if day:
+                # Use find_times if it exists, otherwise fall back to find_status or direct dict lookup
+                if hasattr(self.tool_one, "find_times"):
+                    times = self.tool_one.find_times(day)
+                elif hasattr(self.tool_one, "find_status"):
+                    times = self.tool_one.find_status(day)
+                elif hasattr(self.tool_one, "schedule"):
+                    times = self.tool_one.schedule.get(day)
+                else:
+                    times = None
+
+                if times:
+                    # Format times nicely whether it's a list or string
+                    if isinstance(times, list):
+                        time_str = ", ".join(times)
+                    else:
+                        time_str = str(times)
+                    return f"The times for {day} are: {time_str}."
+                return f"No appointments found for {day}."
+            elif "appointment" in text or "time" in text or "available" in text:
+                return "Which day would you like to check?"
+
+        # Fall through to model if available
+        if self.model is not None:
+            return self.model_reply()
+        
+        return "I'm not sure how to help with that."
 
     def model_reply(self):
         """Ask the model for a reply. Give a safe fallback answer if the model has none."""
